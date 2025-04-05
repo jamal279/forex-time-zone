@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Market Sessions</title>
+    <style>
+        :root {
+            --active-color: #2c8340;
+            --closed-color: #701f27;
+            --text-color: #151946;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: white;
+        }
+
+        .forex-timezones {
+            max-width: 350px;
+            margin: 0 auto;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: var(--text-color);
+        }
+
+        .widget-header {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .widget-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .timezone-container {
+            margin-bottom: 15px;
+        }
+
+        .timezone-session {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .timezone-session.active-session {
+            background-color: #e8f5e9;
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .session-hours {
+            font-size: 0.9rem;
+            color: #546e7a;
+            margin-bottom: 4px;
+        }
+
+        .session-status {
+            font-size: 0.9rem;
+        }
+
+        .status-active {
+            color: var(--active-color);
+            font-weight: bold;
+        }
+
+        .status-closed {
+            color: var(--closed-color);
+            font-weight: bold;
+        }
+
+        .current-time {
+            text-align: center;
+            font-size: 0.95rem;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .time {
+            font-weight: bold;
+        }
+
+        @media (max-width: 400px) {
+            .forex-timezones {
+                padding: 15px;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="forex-timezones">
+        <div class="widget-header">
+            <h3>Forex Market Sessions</h3>
+        </div>
+        
+        <div class="timezone-container">
+            <div class="timezone-session">
+                <div class="session-header">
+                    <span>Asian Session</span>
+                    <span class="session-time-display">08:00 - 17:00 MSK</span>
+                </div>
+                <div class="session-hours">Tokyo, Singapore, Hong Kong</div>
+                <div class="session-status">● Active</div>
+            </div>
+            
+            <div class="timezone-session">
+                <div class="session-header">
+                    <span>European Session</span>
+                    <span class="session-time-display">10:00 - 19:00 MSK</span>
+                </div>
+                <div class="session-hours">London, Frankfurt</div>
+                <div class="session-status">● Opens in 2h 15m</div>
+            </div>
+            
+            <div class="timezone-session">
+                <div class="session-header">
+                    <span>American Session</span>
+                    <span class="session-time-display">16:00 - 01:00 MSK</span>
+                </div>
+                <div class="session-hours">New York, Chicago</div>
+                <div class="session-status">● Opens in 7h 15m</div>
+            </div>
+            
+            <div class="timezone-session">
+                <div class="session-header">
+                    <span>Session Overlap</span>
+                    <span class="session-time-display">16:00 - 19:00 MSK</span>
+                </div>
+                <div class="session-hours">London + New York</div>
+                <div class="session-status">● Opens in 7h 15m</div>
+            </div>
+        </div>
+        
+        <div class="current-time">
+            Current Time: <span class="time">00:00:00</span> MSK
+            <div class="market-status" style="margin-top: 5px; font-size: 0.9rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Session configuration (MSK time)
+        const sessions = {
+            asia: { start: 8, end: 17, cities: 'Tokyo, Singapore, Hong Kong' },
+            europe: { start: 10, end: 19, cities: 'London, Frankfurt' },
+            america: { start: 16, end: 1, cities: 'New York, Chicago' },
+            overlap: { start: 16, end: 19, cities: 'London + New York' }
+        };
+
+        // DOM elements
+        const currentTimeElement = document.querySelector('.current-time .time');
+        const marketStatusElement = document.querySelector('.market-status');
+
+        // Initialize
+        updateForexWidget();
+        setInterval(updateForexWidget, 1000);
+
+        function updateForexWidget() {
+            updateCurrentTime();
+            updateAllSessionStatuses();
+            updateMarketStatus();
+        }
+
+        function updateCurrentTime() {
+            const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            currentTimeElement.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateAllSessionStatuses() {
+            const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+            const day = now.getDay(); // 0 - Sunday, 6 - Saturday
+            const hours = now.getHours();
+            
+            // Check weekend (market closed)
+            const isWeekend = day === 0 || day === 6;
+            
+            // Update each session status
+            document.querySelectorAll('.timezone-session').forEach((session, index) => {
+                const statusElement = session.querySelector('.session-status');
+                const sessionKey = Object.keys(sessions)[index];
+                const { start, end } = sessions[sessionKey];
+                
+                if (isWeekend) {
+                    statusElement.innerHTML = '● <span class="status-closed">Closed (Weekend)</span>';
+                    session.classList.remove('active-session');
+                    return;
+                }
+                
+                const isActive = checkSessionActive(start, end, hours);
+                
+                if (isActive) {
+                    statusElement.innerHTML = '● <span class="status-active">Open</span>';
+                    session.classList.add('active-session');
+                } else {
+                    const timeUntil = calculateTimeUntil(start, hours);
+                    statusElement.innerHTML = `● Opens in ${timeUntil}`;
+                    session.classList.remove('active-session');
+                }
+            });
+        }
+
+        function checkSessionActive(start, end, currentHour) {
+            if (end > start) {
+                return currentHour >= start && currentHour < end;
+            } else {
+                return currentHour >= start || currentHour < end;
+            }
+        }
+
+        function calculateTimeUntil(sessionStart, currentHour) {
+            let hoursUntil = sessionStart - currentHour;
+            if (hoursUntil <= 0) hoursUntil += 24;
+            return `${hoursUntil}h`;
+        }
+
+        function updateMarketStatus() {
+            const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+            const day = now.getDay();
+            
+            if (day === 0 || day === 6) {
+                marketStatusElement.innerHTML = '<span class="status-closed">Market Closed (Weekend)</span>';
+            } else {
+                const hours = now.getHours();
+                const isMarketOpen = 
+                    checkSessionActive(sessions.asia.start, sessions.asia.end, hours) ||
+                    checkSessionActive(sessions.europe.start, sessions.europe.end, hours) ||
+                    checkSessionActive(sessions.america.start, sessions.america.end, hours);
+                
+                marketStatusElement.innerHTML = isMarketOpen 
+                    ? '<span class="status-active">Market Open</span>' 
+                    : '<span class="status-closed">Market Closed</span>';
+            }
+        }
+    </script>
+</body>
+</html>
